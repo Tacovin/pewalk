@@ -1,0 +1,27 @@
+name: build
+
+on: [push, pull_request]
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ilammy/msvc-dev-cmd@v1
+      - name: build (msvc)
+        shell: cmd
+        run: build.bat
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install pefile
+      - name: compare with pefile
+        run: python tests/check_pefile.py build/pewalk.exe "C:/Windows/System32/*.exe" "C:/Windows/SysWOW64/*.exe" C:/Windows/System32/kernel32.dll C:/Windows/System32/ntdll.dll
+
+  linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: build (gcc, warnings as errors)
+        run: make CFLAGS="-O2 -Wall -Wextra -Werror -std=c11"
+      - run: ./build/pewalk -h
